@@ -131,42 +131,41 @@ def start():
         except:
             pass
 
-        if len(driver.find_elements(By.XPATH, '//div[@id="root"]')) == 0:
-            return
+        if len(driver.find_elements(By.XPATH, '//div[@id="root"]')) == 1:
 
-        records = sheet.get_all_records()
+            records = sheet.get_all_records()
 
-        for index in range(len(PAGE_URLS)):
-            driver.get(PAGE_URLS[index])
-            time.sleep(5)
+            for index in range(len(PAGE_URLS)):
+                driver.get(PAGE_URLS[index])
+                time.sleep(5)
 
-            rows = get_rows(driver)
+                rows = get_rows(driver)
 
-            if index == 0:
-                with open('mollie.csv', 'w', encoding='utf-8') as of:
-                    of.writelines(','.join(row) + '\n' for row in rows)
-            else:
-                with open('mollie.csv', 'a+', encoding='utf-8') as of:
-                    of.writelines(','.join(row) + '\n' for row in rows)
+                if index == 0:
+                    with open('mollie.csv', 'w', encoding='utf-8') as of:
+                        of.writelines(','.join(row) + '\n' for row in rows)
+                else:
+                    with open('mollie.csv', 'a+', encoding='utf-8') as of:
+                        of.writelines(','.join(row) + '\n' for row in rows)
 
-            if index == 0:
-                start_index = 0
-                last_row_index = 1
-            else:
-                start_index = index * 500 - 1
-                last_row_index = index * 500
+                if index == 0:
+                    start_index = 0
+                    last_row_index = 1
+                else:
+                    start_index = index * 500 - 1
+                    last_row_index = index * 500
 
-            record_ids = []
-            for record in records[start_index:(index + 1) * 500 - 2]:
-                if not record['id']:
-                    break
-                last_row_index += 1
-                record_ids.append(record['id'])
-
-            for row in reversed(rows):
-                if row[0] not in record_ids:
+                record_ids = []
+                for record in records[start_index:(index + 1) * 500 - 2]:
+                    if not record['id']:
+                        break
                     last_row_index += 1
-                    sheet.update(f'A{last_row_index}:F{last_row_index}', [row])
+                    record_ids.append(record['id'])
+
+                for row in reversed(rows):
+                    if row[0] not in record_ids:
+                        last_row_index += 1
+                        sheet.update(f'A{last_row_index}:F{last_row_index}', [row])
 
         driver.close()
         driver.quit()
