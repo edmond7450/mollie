@@ -1,3 +1,4 @@
+import gspread
 import locale
 import os.path
 import pytz
@@ -5,6 +6,7 @@ import shutil
 import time
 
 from datetime import datetime, timedelta
+from oauth2client.service_account import ServiceAccountCredentials
 from pyvirtualdisplay import Display
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
@@ -27,7 +29,13 @@ PAGE_URLS = ['https://my.mollie.com/dashboard/org_3743224/payments?status=paid',
              'https://my.mollie.com/dashboard/org_15375179/payments?status=paid',
              'https://my.mollie.com/dashboard/org_15673248/payments?status=paid']
 
+scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
+
 locale.setlocale(locale.LC_TIME, "German")
+
+creds = ServiceAccountCredentials.from_json_keyfile_name('client_key.json', scope)
+client = gspread.authorize(creds)
+sheet = client.open('New Payment API').sheet1
 
 
 def get_rows():
@@ -45,7 +53,7 @@ def get_rows():
     while (scrollPos < scrollHeight):
         scrollPos = scrollHeight
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(2)
+        time.sleep(10)
         scrollHeight = driver.execute_script("return document.body.scrollHeight")
 
     ele_rows = driver.find_elements(By.XPATH, '//div[contains(@class, "grid-table__data")]/dl')
@@ -80,41 +88,65 @@ def get_rows():
 
 
 def main():
-    time.sleep(3)
-    driver.get(BASE_URL)
-    time.sleep(3)
     try:
-        WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//input[@id="email"]')))
-        ele_email = driver.find_element(By.XPATH, '//input[@id="email"]')
-        ele_email.click()
-        ele_email.clear()
-        ele_email.send_keys(USERNAME)
         time.sleep(3)
-        ele_password = driver.find_element(By.XPATH, '//input[@id="password"]')
-        ele_password.click()
-        ele_password.clear()
-        ele_password.send_keys(PASSWORD)
-        time.sleep(1)
-        ele_password.send_keys(Keys.ENTER)
-        time.sleep(7)
+        driver.get(BASE_URL)
+        time.sleep(3)
+        try:
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.XPATH, '//input[@id="email"]')))
+            ele_email = driver.find_element(By.XPATH, '//input[@id="email"]')
+            ele_email.click()
+            ele_email.clear()
+            ele_email.send_keys(USERNAME)
+            time.sleep(3)
+            ele_password = driver.find_element(By.XPATH, '//input[@id="password"]')
+            ele_password.click()
+            ele_password.clear()
+            ele_password.send_keys(PASSWORD)
+            time.sleep(1)
+            ele_password.send_keys(Keys.ENTER)
+            time.sleep(7)
+        except:
+            pass
+
+        if len(driver.find_elements(By.XPATH, '//div[@id="root"]')) == 0:
+            return
+
+        records = sheet.get_all_records()
+
+        for index in range(len(PAGE_URLS)):
+            driver.get(PAGE_URLS[index])
+            time.sleep(5)
+
+            rows = get_rows()
+
+            if index == 0:
+                with open('mollie.csv', 'w', encoding='utf-8') as of:
+                    of.writelines(','.join(row) + '\n' for row in rows)
+            else:
+                with open('mollie.csv', 'a+', encoding='utf-8') as of:
+                    of.writelines(','.join(row) + '\n' for row in rows)
+
+            if index == 0:
+                start_index = 0
+                last_row_index = 1
+            else:
+                start_index = index * 500 - 1
+                last_row_index = index * 500
+
+            record_ids = []
+            for record in records[start_index:(index + 1) * 500 - 2]:
+                if not record['id']:
+                    break
+                last_row_index += 1
+                record_ids.append(record['id'])
+
+            for row in reversed(rows):
+                if row[0] not in record_ids:
+                    last_row_index += 1
+                    sheet.update(f'A{last_row_index}:F{last_row_index}', [row])
     except:
         pass
-
-    if len(driver.find_elements(By.XPATH, '//div[@id="root"]')) == 0:
-        return
-
-    for index in range(len(PAGE_URLS)):
-        driver.get(PAGE_URLS[index])
-        time.sleep(3)
-
-        rows = get_rows()
-
-        if index == 0:
-            with open('mollie.csv', 'w', encoding='utf-8') as of:
-                of.writelines(','.join(row) + '\n' for row in rows)
-        else:
-            with open('mollie.csv', 'a+', encoding='utf-8') as of:
-                of.writelines(','.join(row) + '\n' for row in rows)
 
 
 if __name__ == "__main__":
