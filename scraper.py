@@ -45,8 +45,7 @@ def get_rows(driver):
     if len(driver.find_elements(By.XPATH, '//div[contains(@class, "grid-table__data")]/dl')) == 0:
         return rows
 
-    tz = pytz.timezone('Europe/Berlin')
-    today = datetime.now(tz)
+    today = datetime.now().astimezone()
     yesterday = today - timedelta(1)
 
     scrollHeight = driver.execute_script("return document.body.scrollHeight")
