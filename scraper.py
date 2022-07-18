@@ -2,6 +2,7 @@ import gspread
 import locale
 import os.path
 import pytz
+import schedule
 import shutil
 import time
 
@@ -38,7 +39,7 @@ client = gspread.authorize(creds)
 sheet = client.open('New Payment API').sheet1
 
 
-def get_rows():
+def get_rows(driver):
     rows = []
 
     if len(driver.find_elements(By.XPATH, '//div[contains(@class, "grid-table__data")]/dl')) == 0:
@@ -87,8 +88,29 @@ def get_rows():
     return rows
 
 
-def main():
+def start():
     try:
+        chrome_options = Options()
+        chrome_options.add_argument("window-size=1200,1000")
+        chrome_options.add_argument("--disable-notifications")
+        chrome_options.add_argument("--no-sandbox")
+        user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
+        chrome_options.add_argument(f'Upgrade-Insecure-Requests=1')
+        chrome_options.add_argument(f'user-agent={user_agent}')
+        chrome_options.add_argument('--verbose')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--disable-software-rasterizer')
+
+        if platform == "win32" or platform == "win64":
+            data_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'selenium')
+            chrome_options.add_argument(f"--user-data-dir={data_dir}")
+            # chrome_options.add_argument("--headless")
+
+        driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+
+        startedAt = datetime.now().timestamp()
+        print("Start! : " + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
+
         time.sleep(3)
         driver.get(BASE_URL)
         time.sleep(3)
@@ -118,7 +140,7 @@ def main():
             driver.get(PAGE_URLS[index])
             time.sleep(5)
 
-            rows = get_rows()
+            rows = get_rows(driver)
 
             if index == 0:
                 with open('mollie.csv', 'w', encoding='utf-8') as of:
@@ -145,6 +167,14 @@ def main():
                 if row[0] not in record_ids:
                     last_row_index += 1
                     sheet.update(f'A{last_row_index}:F{last_row_index}', [row])
+
+        driver.close()
+        driver.quit()
+
+        print("End! : " + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
+
+        if datetime.now().timestamp() - startedAt < 60:
+            shutil.rmtree('selenium')
     except:
         pass
 
@@ -154,38 +184,9 @@ if __name__ == "__main__":
         display = Display(visible=0, size=(1200, 1000))
         display.start()
 
-    chrome_options = Options()
-    chrome_options.add_argument("window-size=1200,1000")
-    chrome_options.add_argument("--disable-notifications")
-    chrome_options.add_argument("--no-sandbox")
-    user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.150 Safari/537.36'
-    chrome_options.add_argument(f'Upgrade-Insecure-Requests=1')
-    chrome_options.add_argument(f'user-agent={user_agent}')
-    chrome_options.add_argument('--verbose')
-    chrome_options.add_argument('--disable-gpu')
-    chrome_options.add_argument('--disable-software-rasterizer')
+    schedule.every(1).hour.do(start)
+    start()
 
-    if platform == "win32" or platform == "win64":
-        data_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'selenium')
-        chrome_options.add_argument(f"--user-data-dir={data_dir}")
-        # chrome_options.add_argument("--headless")
-
-    driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
-
-    startedAt = datetime.now().timestamp()
-    print("Start! : " + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
-
-    main()
-
-    driver.close()
-    driver.quit()
-
-    if platform == "linux" or platform == "linux2":
-        display.stop()
-
-    print("End! : " + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
-
-    if datetime.now().timestamp() - startedAt < 60:
-        shutil.rmtree('selenium')
-
-    exit(1)
+    while True:
+        schedule.run_pending()
+        time.sleep(60)
