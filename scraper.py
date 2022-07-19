@@ -21,14 +21,14 @@ from webdriver_manager.chrome import ChromeDriverManager
 from my_settings import *
 
 BASE_URL = 'https://my.mollie.com/dashboard/login?lang=en'
-PAGE_URLS = ['https://my.mollie.com/dashboard/org_3743224/payments?status=paid',
-             'https://my.mollie.com/dashboard/org_8385791/payments?status=paid',
-             'https://my.mollie.com/dashboard/org_8843661/payments?status=paid',
-             'https://my.mollie.com/dashboard/org_9081691/payments?status=paid',
-             'https://my.mollie.com/dashboard/org_11931807/payments?status=paid',
-             'https://my.mollie.com/dashboard/org_12418658/payments?status=paid',
-             'https://my.mollie.com/dashboard/org_15375179/payments?status=paid',
-             'https://my.mollie.com/dashboard/org_15673248/payments?status=paid']
+PAGE_URLS = ['https://my.mollie.com/dashboard/org_3743224/payments?status=paid%2Cpaidout',
+             # 'https://my.mollie.com/dashboard/org_8385791/payments?status=paid%2Cpaidout',
+             # 'https://my.mollie.com/dashboard/org_8843661/payments?status=paid%2Cpaidout',
+             # 'https://my.mollie.com/dashboard/org_9081691/payments?status=paid%2Cpaidout',
+             # 'https://my.mollie.com/dashboard/org_11931807/payments?status=paid%2Cpaidout',
+             # 'https://my.mollie.com/dashboard/org_12418658/payments?status=paid%2Cpaidout',
+             'https://my.mollie.com/dashboard/org_15375179/payments?status=paid%2Cpaidout',
+             'https://my.mollie.com/dashboard/org_15673248/payments?status=paid%2Cpaidout']
 
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 
@@ -50,10 +50,12 @@ def get_rows(driver):
 
     scrollHeight = driver.execute_script("return document.body.scrollHeight")
     scrollPos = 0
-    while (scrollPos < scrollHeight):
+    for i in range(4):
+        if scrollPos == scrollHeight:
+            break
         scrollPos = scrollHeight
         driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(10)
+        time.sleep(5)
         scrollHeight = driver.execute_script("return document.body.scrollHeight")
 
     ele_rows = driver.find_elements(By.XPATH, '//div[contains(@class, "grid-table__data")]/dl')
