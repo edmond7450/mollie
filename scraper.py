@@ -138,7 +138,10 @@ def start():
 
             for index in range(len(PAGE_URLS)):
                 driver.get(PAGE_URLS[index])
-                time.sleep(5)
+                time.sleep(7)
+
+                if driver.current_url != PAGE_URLS[index]:
+                    continue
 
                 rows = get_rows(driver)
 
