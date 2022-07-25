@@ -28,7 +28,8 @@ PAGE_URLS = ['https://my.mollie.com/dashboard/org_3743224/payments?status=paid%2
              # 'https://my.mollie.com/dashboard/org_11931807/payments?status=paid%2Cpaidout',
              # 'https://my.mollie.com/dashboard/org_12418658/payments?status=paid%2Cpaidout',
              'https://my.mollie.com/dashboard/org_15375179/payments?status=paid%2Cpaidout',
-             'https://my.mollie.com/dashboard/org_15673248/payments?status=paid%2Cpaidout']
+             'https://my.mollie.com/dashboard/org_15673248/payments?status=paid%2Cpaidout',
+             'https://my.mollie.com/dashboard/org_15725058/payments?status=paid%2Cpaidout']
 
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 
