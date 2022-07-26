@@ -37,7 +37,7 @@ locale.setlocale(locale.LC_TIME, "German")
 
 creds = ServiceAccountCredentials.from_json_keyfile_name('client_key.json', scope)
 client = gspread.authorize(creds)
-sheet = client.open('New Payment API').sheet1
+sheets = client.open('New Payment API').worksheets()
 
 
 def get_rows(driver):
@@ -135,8 +135,6 @@ def start():
 
         if len(driver.find_elements(By.XPATH, '//div[@id="root"]')) == 1:
 
-            records = sheet.get_all_records()
-
             for index in range(len(PAGE_URLS)):
                 driver.get(PAGE_URLS[index])
                 time.sleep(7)
@@ -153,15 +151,11 @@ def start():
                     with open('mollie.csv', 'a+', encoding='utf-8') as of:
                         of.writelines(','.join(row) + '\n' for row in rows)
 
-                if index == 0:
-                    start_index = 0
-                    last_row_index = 1
-                else:
-                    start_index = index * 500 - 1
-                    last_row_index = index * 500
+                records = sheets[index].get_all_records()
 
+                last_row_index = 1
                 record_ids = []
-                for record in records[start_index:(index + 1) * 500 - 2]:
+                for record in records:
                     if not record['id']:
                         break
                     last_row_index += 1
@@ -170,7 +164,7 @@ def start():
                 for row in reversed(rows):
                     if row[0] not in record_ids:
                         last_row_index += 1
-                        sheet.update(f'A{last_row_index}:F{last_row_index}', [row])
+                        sheets[index].update(f'A{last_row_index}:F{last_row_index}', [row])
 
         driver.close()
         driver.quit()
