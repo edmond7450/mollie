@@ -88,6 +88,7 @@ def get_rows(driver):
 
 
 def start():
+    driver = None
     try:
         chrome_options = Options()
         chrome_options.add_argument("window-size=1200,1000")
@@ -162,16 +163,21 @@ def start():
                     if row[0] not in record_ids:
                         last_row_index += 1
                         sheets[index].update(f'A{last_row_index}:F{last_row_index}', [row])
+                        time.sleep(1)
 
         driver.close()
         driver.quit()
-
-        print("End! : " + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
+        driver = None
 
         if datetime.now().timestamp() - startedAt < 60:
             shutil.rmtree('selenium')
-    except:
-        pass
+    except Exception as e:
+        print(repr(e))
+        if driver:
+            driver.close()
+            driver.quit()
+
+    print("End! : " + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
 
 
 if __name__ == "__main__":
