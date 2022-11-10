@@ -2,6 +2,7 @@ import gspread
 import locale
 import os.path
 import pytz
+import requests
 import schedule
 import shutil
 import time
@@ -159,11 +160,41 @@ def start():
                     last_row_index += 1
                     record_ids.append(record['id'])
 
-                for row in reversed(rows):
-                    if row[0] not in record_ids:
-                        last_row_index += 1
-                        sheets[index].update(f'A{last_row_index}:F{last_row_index}', [row])
-                        time.sleep(1)
+                if index == 0:
+                    url = PAGE_URLS[index][:PAGE_URLS[index].find('?')]
+                    for row in reversed(rows):
+                        if row[0] not in record_ids:
+                            try:
+                                driver.get(url + '/' + row[0])
+                                WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//dd[starts-with(text(), "http")]')))
+                                redirect_url = driver.find_element(By.XPATH, '//dd[starts-with(text(), "http")]').text
+
+                                if not any(business_url in redirect_url for business_url in ['/autorenkanzlei-beckmann.de/', '/papernerds.de/', '/buchhaltungskanzlei-hofmann.de/']):
+                                    redirect_url = requests.get(redirect_url).url
+
+                                if '/autorenkanzlei-beckmann.de/' in redirect_url:
+                                    business = 'Autorenkanzlei'
+                                elif '/papernerds.de/' in redirect_url:
+                                    business = 'Papernerds'
+                                elif '/buchhaltungskanzlei-hofmann.de/' in redirect_url:
+                                    business = 'Buchhaltungskanzlei'
+                                else:
+                                    business = ''
+
+                                row.append(business)
+
+                            except Exception as e:
+                                pass
+
+                            last_row_index += 1
+                            sheets[index].update(f'A{last_row_index}:G{last_row_index}', [row])
+                            time.sleep(1)
+                else:
+                    for row in reversed(rows):
+                        if row[0] not in record_ids:
+                            last_row_index += 1
+                            sheets[index].update(f'A{last_row_index}:F{last_row_index}', [row])
+                            time.sleep(1)
 
         driver.close()
         driver.quit()
