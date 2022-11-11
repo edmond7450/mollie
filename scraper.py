@@ -88,6 +88,38 @@ def get_rows(driver):
     return rows
 
 
+def get_business(driver):
+    url = 'https://my.mollie.com/dashboard/org_3743224/payments'
+
+    records = sheets[0].get_all_records()
+
+    last_row_index = 1
+    for record in records:
+        if not record['id']:
+            break
+
+        driver.get(url + '/' + record['id'])
+        WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//dd[starts-with(text(), "http")]')))
+        redirect_url = driver.find_element(By.XPATH, '//dd[starts-with(text(), "http")]').text
+
+        if not any(business_url in redirect_url for business_url in ['/autorenkanzlei-beckmann.de/', '/papernerds.de/', '/buchhaltungskanzlei-hofmann.de/']):
+            redirect_url = requests.get(redirect_url).url
+
+        if '/autorenkanzlei-beckmann.de/' in redirect_url:
+            business = 'Autorenkanzlei'
+        elif '/papernerds.de/' in redirect_url:
+            business = 'Papernerds'
+        elif '/buchhaltungskanzlei-hofmann.de/' in redirect_url:
+            business = 'Buchhaltungskanzlei'
+        else:
+            business = ''
+
+        last_row_index += 1
+        if business:
+            sheets[0].update(f'F{last_row_index}', business)
+            time.sleep(1)
+
+
 def start():
     driver = None
     try:
@@ -133,6 +165,8 @@ def start():
             pass
 
         if len(driver.find_elements(By.XPATH, '//div[@id="root"]')) == 1:
+
+            # get_business(driver)
 
             for index in range(len(PAGE_URLS)):
                 driver.get(PAGE_URLS[index])
@@ -183,17 +217,17 @@ def start():
 
                                 row.append(business)
 
-                            except Exception as e:
+                            except:
                                 pass
 
                             last_row_index += 1
-                            sheets[index].update(f'A{last_row_index}:G{last_row_index}', [row])
+                            sheets[index].update(f'A{last_row_index}:F{last_row_index}', [row])
                             time.sleep(1)
                 else:
                     for row in reversed(rows):
                         if row[0] not in record_ids:
                             last_row_index += 1
-                            sheets[index].update(f'A{last_row_index}:F{last_row_index}', [row])
+                            sheets[index].update(f'A{last_row_index}:E{last_row_index}', [row])
                             time.sleep(1)
 
         driver.close()

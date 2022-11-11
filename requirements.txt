@@ -2,6 +2,7 @@ gspread
 oauth2client
 pytz
 pyvirtualdisplay
+requests
 schedule
 selenium
 webdriver-manager
