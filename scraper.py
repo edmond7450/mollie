@@ -12,6 +12,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from pyvirtualdisplay import Display
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
@@ -133,13 +134,14 @@ def start():
         chrome_options.add_argument('--verbose')
         chrome_options.add_argument('--disable-gpu')
         chrome_options.add_argument('--disable-software-rasterizer')
+        chrome_options.add_argument('log-level=3')
 
         if platform == "win32" or platform == "win64":
             data_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'selenium')
             chrome_options.add_argument(f"--user-data-dir={data_dir}")
             # chrome_options.add_argument("--headless")
 
-        driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome_options)
+        driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=chrome_options)
 
         startedAt = datetime.now().timestamp()
         print("Start! : " + time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()))
