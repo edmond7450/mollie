@@ -205,17 +205,20 @@ def start():
                                 WebDriverWait(driver, 5).until(EC.presence_of_element_located((By.XPATH, '//dd[starts-with(text(), "http")]')))
                                 redirect_url = driver.find_element(By.XPATH, '//dd[starts-with(text(), "http")]').text
 
-                                if not any(business_url in redirect_url for business_url in ['/autorenkanzlei-beckmann.de/', '/papernerds.de/', '/buchhaltungskanzlei-hofmann.de/']):
-                                    redirect_url = requests.get(redirect_url).url
+                                business = ''
+                                for i in range(5):
+                                    if not any(business_url in redirect_url for business_url in ['/autorenkanzlei-beckmann.de/', '/papernerds.de/', '/buchhaltungskanzlei-hofmann.de/']):
+                                        redirect_url = requests.get(redirect_url).url
 
-                                if '/autorenkanzlei-beckmann.de/' in redirect_url:
-                                    business = 'Autorenkanzlei'
-                                elif '/papernerds.de/' in redirect_url:
-                                    business = 'Papernerds'
-                                elif '/buchhaltungskanzlei-hofmann.de/' in redirect_url:
-                                    business = 'Buchhaltungskanzlei'
-                                else:
-                                    business = ''
+                                    if '/autorenkanzlei-beckmann.de/' in redirect_url:
+                                        business = 'Autorenkanzlei'
+                                    elif '/papernerds.de/' in redirect_url:
+                                        business = 'Papernerds'
+                                    elif '/buchhaltungskanzlei-hofmann.de/' in redirect_url:
+                                        business = 'Buchhaltungskanzlei'
+
+                                    if business:
+                                        break
 
                                 row.append(business)
 
